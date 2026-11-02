@@ -1,6 +1,7 @@
 # Radar Dragon Ball — écran Waveshare ESP32-S3-Touch-AMOLED-1.43
 
-Boîtier du radar Dragon Ball (remix du modèle MakerWorld 2776400) pour la carte Waveshare
+Boîtier du radar Dragon Ball (projet [BaQs/dragon-radar](https://github.com/BaQs/dragon-radar), base
+[socquique/capsule-radar](https://github.com/socquique/capsule-radar)) pour la carte Waveshare
 ESP32-S3-Touch-AMOLED-1.43, avec une LiPo 603040 sous la carte et une molette qui appuie sur le
 bouton BOOT. Dimensions : Ø 57,6 × 21,4 mm.
 

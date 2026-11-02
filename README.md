@@ -11,9 +11,8 @@ by Quique Tortosa, the live ADS-B radar firmware (MIT). The firmware is the same
 crown button described below; everything else the radar does (web configuration, themes, weather
 views, OTA…) is documented in [docs/CAPSULE_RADAR.md](docs/CAPSULE_RADAR.md), the upstream README.
 
-The enclosure is a remix of the **[Dragon Ball Radar](https://makerworld.com/models/2776400)** model
-on MakerWorld: scaled to the Waveshare 1.43" board, made thicker to hold a battery under the board,
-and fitted with a crown that really presses a button.
+The enclosure is adapted from a Dragon Ball radar model: scaled to the Waveshare 1.43" board, made
+thicker to hold a battery under the board, and fitted with a crown that really presses a button.
 
 ## What this fork adds
 
@@ -133,8 +132,8 @@ python checks.py <output folder>      # no part touches the board, the battery o
 python make_3mf.py <output folder> <file.3mf> [Bambu project to copy the printer settings from]
 ```
 
-The inputs are not in this repository: the radar and stand STEP files come with the original
-MakerWorld model, and the board model is on the Waveshare wiki. Every dimension the scripts use
+The inputs are not in this repository: the radar and stand STEP files of the original Dragon Ball
+radar model, and the board model from the Waveshare wiki. Every dimension the scripts use
 (scale, clearances, battery, crown travel, screws…) is in the `P` table at the top of
 `build_radar143.py`.
 
@@ -142,8 +141,7 @@ MakerWorld model, and the board model is on the Waveshare wiki. Every dimension 
 
 - Firmware: [Capsule Radar](https://github.com/socquique/capsule-radar) by Quique Tortosa (socquique),
   MIT licence (see [LICENSE](LICENSE)). The changes in this fork are under the same licence.
-- Enclosure: remix of [Dragon Ball Radar](https://makerworld.com/models/2776400) on MakerWorld,
-  credit to its author; check the original model's licence there before reusing these files.
+- Enclosure: adapted from a Dragon Ball radar model, credit to its author.
 - The Capsule Corp emblem was redrawn for this project.
 - Dragon Ball, the Dragon Radar and Capsule Corporation are trademarks of their respective owners.
   This is a non-commercial fan project.

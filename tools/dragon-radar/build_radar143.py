@@ -1,4 +1,4 @@
-# Radar Dragon Ball (MakerWorld 2776400) adapté à la Waveshare ESP32-S3-Touch-AMOLED-1.43.
+# Radar Dragon Ball adapté à la Waveshare ESP32-S3-Touch-AMOLED-1.43 (BaQs/dragon-radar, base socquique/capsule-radar).
 # Coques d'origine réduites ×0,63 (même bande noire visible qu'avec la 1.75), épaisseur augmentée
 # pour une LiPo 603040 sous la carte, carte vissée sur un berceau posé sur 3 plots,
 # molette qui appuie sur BOOT (la 1.43 n'a pas de bouton PWR), logo Capsule Corp incrusté au dos.

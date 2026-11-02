@@ -90,7 +90,7 @@ main = f'''<?xml version="1.0" encoding="UTF-8"?>
  <metadata name="BambuStudio:3mfVersion">1</metadata>
  <metadata name="Copyright"></metadata>
  <metadata name="CreationDate">{today}</metadata>
- <metadata name="Description">Remix personnel du Dragon Ball Radar (MakerWorld 2776400) pour la Waveshare ESP32-S3-Touch-AMOLED-{SCREEN}</metadata>
+ <metadata name="Description">Dragon Radar pour la Waveshare ESP32-S3-Touch-AMOLED-{SCREEN} - https://github.com/BaQs/dragon-radar (base : socquique/capsule-radar)</metadata>
  <metadata name="Designer"></metadata>
  <metadata name="DesignerCover"></metadata>
  <metadata name="DesignerUserId"></metadata>
