@@ -1,0 +1,143 @@
+{
+ "s": 0.63,
+ "board_rot": 66.5,
+ "glass_front": 1.1,
+ "pcb_back": -5.1,
+ "standoff_tip": -9.1,
+ "pmma_r": 22.75,
+ "pcb_r": 21.75,
+ "boot_tip_r": 20.95,
+ "boot_z": [
+  -7.75,
+  -5.75
+ ],
+ "usb_z": [
+  -8.35,
+  -5.19
+ ],
+ "standoffs": [
+  [
+   11.59,
+   -15.75
+  ],
+  [
+   11.59,
+   15.75
+  ],
+  [
+   -11.61,
+   15.75
+  ],
+  [
+   -11.51,
+   -15.75
+  ]
+ ],
+ "headers": [
+  [
+   0.0,
+   16.25
+  ],
+  [
+   0.0,
+   -16.25
+  ]
+ ],
+ "header_z_min": -9.6,
+ "spider_t": 1.6,
+ "bat": [
+  40.0,
+  30.0,
+  6.0
+ ],
+ "bat_tol": 0.3,
+ "bat_gap": 0.25,
+ "bat_angle": 5.0,
+ "floor_t": 1.8,
+ "floor_fillet": 2.0,
+ "collar_d": 46.7,
+ "collar_h": 1.2,
+ "joint_r_orig": 41.2,
+ "joint_angles": [
+  20,
+  80,
+  130,
+  165,
+  195,
+  300
+ ],
+ "post_r": 24.0,
+ "post_angles": [
+  5,
+  110,
+  270
+ ],
+ "boss_d": 5.2,
+ "pilot_d": 1.7,
+ "clear_d": 2.3,
+ "head_cb_d": 4.2,
+ "joint_screw": 10.0,
+ "crown_rest_gap": 0.45,
+ "crown_travel": 0.9,
+ "flange": 5.4,
+ "flange_len": 1.8,
+ "neck_d": 4.0,
+ "usb_open": [
+  13.0,
+  7.4
+ ],
+ "skirt_clear": 0.15,
+ "skirt_t": 1.0,
+ "preload": 0.1,
+ "logo_scale": 1.0,
+ "logo_depth": 0.6,
+ "h_total": 21.41,
+ "outer_diameter": 57.61,
+ "zj": -3.402,
+ "lip_under": 2.268,
+ "dz_board": 1.168,
+ "floor_in": -16.082,
+ "z_bot_out": -17.882,
+ "seat_z": -11.081,
+ "front_post_top": -0.681,
+ "head_recessed": true,
+ "standoffs_radar": [
+  [
+   19.07,
+   4.35
+  ],
+  [
+   -9.82,
+   16.91
+  ],
+  [
+   -19.07,
+   -4.37
+  ],
+  [
+   9.85,
+   -16.84
+  ]
+ ],
+ "standoff_angles": [
+  12.8,
+  120.2,
+  -167.1,
+  -59.7
+ ],
+ "usb_angle": 246.5,
+ "usb_zc": -5.602,
+ "cb_out": -31.588,
+ "cb_in": -28.888,
+ "wall_behind_stop": 1.343,
+ "rod_end": -22.85,
+ "pad_tip": -21.4,
+ "pad_z": [
+  -6.882,
+  -4.132
+ ],
+ "blade_z": [
+  -2.932,
+  -4.932
+ ]
+}
