@@ -25,7 +25,11 @@ The crown presses the board's **BOOT button** (GPIO0):
   (screen and WiFi off).
 - **Wake up**: hold the crown 1.5 s. A short bump sends it straight back to sleep.
 
-Firmware version `1.6.0-dragon.1`, shown on the Stats screen and on the web page. Timings are the
+It also fixes the theme changing by itself: LVGL's 0.4 s long press used to cycle the theme,
+so a slightly slow tap on an aircraft switched Orb to the next theme (and lost the tap). A theme
+change now takes a still 1.5 s hold away from any aircraft (`THEME_HOLD_MS`).
+
+Firmware version `1.6.0-dragon.2`, shown on the Stats screen and on the web page. Timings are the
 `BOOT_BTN_*` values in `src/config.h`; the button logic is in `src/boot_button.h` and has host tests
 in `tests/boot_button_test.cpp`.
 
@@ -90,11 +94,11 @@ With the crown on top, the USB-C port sits at about 10 o'clock, so the radar cha
 
 ### Update over the air (board already running Capsule Radar)
 
-1. Download `dragon-radar-1.6.0-dragon.1-amoled143-ota.bin` from the
+1. Download `dragon-radar-1.6.0-dragon.2-amoled143-ota.bin` from the
    [Releases](https://github.com/BaQs/dragon-radar/releases).
 2. Open the radar's web page (`http://capsuleradar.local`, or the address shown on the Stats
    screen) and follow **Firmware update**.
-3. Upload the file. The radar restarts and shows `v1.6.0-dragon.1`.
+3. Upload the file. The radar restarts and shows `v1.6.0-dragon.2`.
 
 ### First install over USB
 

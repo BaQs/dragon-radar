@@ -385,6 +385,8 @@ void ui_button_hold(float progress, bool armed) {
 // Arm on long press, cycle on release, cancel on any drag/scroll.
 static bool s_lpArmed = false;      // long-press timer passed, finger still down
 static bool s_lpMoved = false;      // finger travelled past the drag threshold since the press
+static bool s_lpOnPlane = false;    // the press started on an aircraft: a hold there never cycles the theme
+static uint32_t s_lpT0 = 0;         // press start: the theme cycles only after THEME_HOLD_MS
 static lv_point_t s_lpOrigin;
 // Finger travel that counts as a drag. 10 px (LVGL's scroll limit) is under 1 mm on these
 // panels, less than a still fingertip drifts: on a 1.43, 3 of 15 holds were cancelled at
@@ -395,8 +397,13 @@ static void radar_press_cb(lv_event_t *e) {
     s_longPressed = false;
     s_lpArmed = false;
     s_lpMoved = false;
+    s_lpOnPlane = false;
+    s_lpT0 = lv_tick_get();
     lv_indev_t *indev = lv_event_get_indev(e);
-    if (indev) lv_indev_get_point(indev, &s_lpOrigin);
+    if (indev) {
+        lv_indev_get_point(indev, &s_lpOrigin);
+        s_lpOnPlane = radar::hitTest(s_lpOrigin.x, s_lpOrigin.y) >= 0;
+    }
 }
 
 static void radar_pressing_cb(lv_event_t *e) {   // any real finger travel cancels the theme cycle
@@ -411,14 +418,17 @@ static void radar_pressing_cb(lv_event_t *e) {   // any real finger travel cance
 
 static void radar_longpress_cb(lv_event_t *e) {   // hold passed: arm, act on release
     (void)e;
-    if (s_lpMoved) return;
+    if (s_lpMoved || s_lpOnPlane) return;           // a slow tap on a plane stays a tap
     s_lpArmed = true;
-    s_longPressed = true;   // the release after a hold is not a tap
 }
 
-static void radar_release_cb(lv_event_t *e) {   // still finger lifted -> cycle the theme
+// Still finger lifted after THEME_HOLD_MS -> cycle the theme. A shorter hold (LVGL's long
+// press is only 400 ms) stays an ordinary tap: the click that follows is let through.
+static void radar_release_cb(lv_event_t *e) {
     (void)e;
-    if (s_lpArmed && !s_lpMoved) radar::cycleTheme();
+    const bool cycle = s_lpArmed && !s_lpMoved && lv_tick_elaps(s_lpT0) >= THEME_HOLD_MS;
+    if (cycle) radar::cycleTheme();
+    s_longPressed = cycle;   // the click right after a theme change is not a tap
     s_lpArmed = false;
 }
 
