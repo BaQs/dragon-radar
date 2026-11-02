@@ -51,6 +51,7 @@ else
 fi
 
 run facedown_sleep -Isrc tests/facedown_sleep_test.cpp
+run boot_button -Isrc tests/boot_button_test.cpp
 
 printf '\n%s\n' "$([ $rc -eq 0 ] && echo 'ALL HOST TESTS PASSED' || echo 'HOST TESTS FAILED')"
 exit $rc

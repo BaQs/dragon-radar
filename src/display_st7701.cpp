@@ -329,6 +329,14 @@ void setBrightness(uint8_t v) {
     s_touchQueue.setWakeOnly(v == 0);   // a dark panel takes a touch only as a wake-up (as display.cpp)
 }
 
+void wake() {
+    lv_disp_trig_activity(NULL);
+}
+
+void sleep() {
+    setBrightness(0);   // RGB panel: dark is the best it offers before deep sleep
+}
+
 void setRotation(uint16_t degrees) {
     s_rot = degrees % 360;
     const float radians = s_rot * ((float)M_PI / 180.0f);

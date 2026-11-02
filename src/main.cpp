@@ -24,6 +24,9 @@
 #include "display.h"                  // M0: CO5300 + LVGL bring-up
 #include "imu_qmi8658.h"             // face-down sleep: accelerometer reads
 #include "facedown_sleep.h"          // face-down sleep: the decision
+#include "boot_button.h"             // BOOT button: zoom / deep sleep
+#include <esp_sleep.h>
+#include <driver/rtc_io.h>
 #include "gps.h"                     // LC76G GNSS (-G variant only)
 #include "battery.h"                 // AXP2101 battery gauge
 #include "rtc_pcf85063.h"            // PCF85063 RTC (offline clock + date)
@@ -1139,10 +1142,65 @@ static void handleUpdateUpload() {
     }
 }
 
+#ifdef PIN_BOOT_BUTTON
+// --- BOOT button deep sleep (config.h BOOT_BTN_*) ---------------------------------------
+// A long press puts the radar into deep sleep; a press on the button wakes the chip, and
+// bootWakeCheck() lets it start only if that press is held. GPIO0 is an RTC pin on the S3,
+// so the RTC domain keeps the pull-up and the wake-on-low armed while everything else is off.
+static void sleepUntilBootButton() {
+    const gpio_num_t pin = (gpio_num_t)PIN_BOOT_BUTTON;
+    rtc_gpio_init(pin);
+    rtc_gpio_set_direction(pin, RTC_GPIO_MODE_INPUT_ONLY);
+    rtc_gpio_pullup_en(pin);
+    rtc_gpio_pulldown_dis(pin);
+    esp_sleep_enable_ext0_wakeup(pin, 0);   // low = pressed
+    Serial.flush();
+    esp_deep_sleep_start();
+}
+
+// Long press, button let go: panel off, WiFi off, deep sleep. Called from loop() only once
+// the button is up, or the level wake-up would fire at once.
+static void bootButtonSleep() {
+    Serial.println("[btn] deep sleep (hold the button to wake)");
+    display::setBrightness(0);
+    display::sleep();
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+    sleepUntilBootButton();
+}
+
+// Woken by the BOOT button: carry on only if the press lasts BOOT_BTN_WAKE_HOLD_MS, so a bump
+// in a bag doesn't switch the radar on. Runs first in setup(), before the panel lights up.
+static void bootWakeCheck() {
+    if (esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_EXT0) return;
+    rtc_gpio_deinit((gpio_num_t)PIN_BOOT_BUTTON);
+    pinMode(PIN_BOOT_BUTTON, INPUT_PULLUP);
+    const uint32_t t0 = millis();
+    uint32_t upSince = 0;
+    while (millis() - t0 < BOOT_BTN_WAKE_HOLD_MS) {
+        if (digitalRead(PIN_BOOT_BUTTON) == HIGH) {
+            if (!upSince) upSince = millis();
+            if (millis() - upSince >= BOOT_BTN_DEBOUNCE_MS) {
+                Serial.println("[btn] short press while asleep: back to sleep");
+                sleepUntilBootButton();
+            }
+        } else {
+            upSince = 0;
+        }
+        delay(5);
+    }
+    Serial.println("[btn] woken by a long press");
+}
+#endif
+
 void setup() {
     Serial.begin(115200);
     delay(200);
     Serial.println("\nCapsule Radar boot  fw " FW_VERSION "  board " BOARD_NAME);
+#ifdef PIN_BOOT_BUTTON
+    bootWakeCheck();                    // woken by the BOOT button: start only on a long press
+    pinMode(PIN_BOOT_BUTTON, INPUT_PULLUP);
+#endif
 
     if (PIN_LCD_SCLK < 0 || PIN_I2C_SDA < 0) {
         Serial.println("[!] Pins in config.h are still -1. Copy them from the Waveshare demo.");
@@ -1511,6 +1569,35 @@ void loop() {
     const bool showClock = wantClock && !g_clockHold;
     if (showClock != radar::clockRequested() && radar::setClock(showClock))
         Serial.println(showClock ? "[clock] idle: radar -> clock" : "[clock] radar is back");
+
+#ifdef PIN_BOOT_BUTTON
+    // BOOT button (the crown on a radar case): short press = next zoom step, long press = deep
+    // sleep once it is let go (see config.h BOOT_BTN_*). A press on a dark or idle screen only
+    // wakes it. The hold that woke the radar from deep sleep is ignored (BootButton unarmed).
+    {
+        static BootButton bootBtn(esp_sleep_get_wakeup_cause() != ESP_SLEEP_WAKEUP_EXT0);
+        static bool wakeOnly = false;
+        static bool sleepPending = false;
+        const uint32_t nowBtn = millis();
+        switch (bootBtn.update(digitalRead(PIN_BOOT_BUTTON) == LOW, nowBtn)) {
+        case BootButton::PRESS:
+            wakeOnly = g_asleep || g_idle;
+            display::wake();               // light the screen: the hold ring has to be seen
+            break;
+        case BootButton::SHORT_PRESS:
+            if (!wakeOnly) ui_cycle_range();
+            break;
+        case BootButton::LONG_PRESS:
+            sleepPending = true;
+            Serial.println("[btn] long press: release to sleep");
+            break;
+        default:
+            break;
+        }
+        ui_button_hold(bootBtn.holdProgress(nowBtn), sleepPending);
+        if (sleepPending && !bootBtn.down()) bootButtonSleep();
+    }
+#endif
     applyBrightness();
 
     delay(5);

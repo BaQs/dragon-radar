@@ -878,6 +878,14 @@ void setBrightness(uint8_t v) {
     s_touchQ.setWakeOnly(v == 0);   // a dark panel takes a touch only as a wake-up
 }
 
+void wake() {
+    lv_disp_trig_activity(NULL);
+}
+
+void sleep() {
+    if (s_gfx) s_gfx->displayOff();   // DISPOFF + SLPIN (Arduino_CO5300)
+}
+
 void setRotation(uint16_t degrees) {
     uint16_t normalized = (uint16_t)(degrees % 360);
     if ((normalized == 90 || normalized == 270) && !s_rotBuf) {

@@ -18,8 +18,16 @@ void loop();
 // its lift (TouchQueue::setWakeOnly).
 void setBrightness(uint8_t v);
 
+// Panel off before deep sleep (CO5300 display off + sleep in): the AMOLED then draws next to
+// nothing. Only a reset (the next boot) brings it back.
+void sleep();
+
 // ms since the last touch (LVGL inactivity timer) — for idle auto-dim.
 uint32_t inactiveMs();
+
+// Count a physical button press as activity, like a touch: restarts the inactivity timer, so
+// the idle dim / clock and the face-down sleep wake up.
+void wake();
 
 // Rotate the whole UI clockwise by an arbitrary number of degrees (normalized to
 // 0..359), e.g. to compensate for any enclosure/mounting angle. Cardinal rotations

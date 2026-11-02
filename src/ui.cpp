@@ -319,16 +319,21 @@ static void poweroff_cb(lv_event_t *e) {
 
 void ui_set_range_cb(void (*cb)(float)) { s_rangeCb = cb; }
 
+// Next zoom step: the on-screen zoom button and the BOOT button (main.cpp) both land here.
+void ui_cycle_range(void) {
+    if (!s_rangeCb) return;
+    const int n = (int)(sizeof(RANGE_STEPS_KM) / sizeof(RANGE_STEPS_KM[0]));
+    s_rangeIdx = (s_rangeIdx + 1) % n;
+    s_rangeCb(RANGE_STEPS_KM[s_rangeIdx]);
+}
+
 static void zoom_cb(lv_event_t *e) {   // fires on PRESS (robust vs scroll-cancel on the tileview)
     (void)e;
     static uint32_t last = 0;
     const uint32_t now = lv_tick_get();
     if (now - last < 250) return;      // debounce repeated/held presses
     last = now;
-    if (!s_rangeCb) return;
-    const int n = (int)(sizeof(RANGE_STEPS_KM) / sizeof(RANGE_STEPS_KM[0]));
-    s_rangeIdx = (s_rangeIdx + 1) % n;
-    s_rangeCb(RANGE_STEPS_KM[s_rangeIdx]);
+    ui_cycle_range();
 }
 
 void ui_set_range_km(float km) {
@@ -342,6 +347,37 @@ void ui_set_range_km(float km) {
     const int n = (int)(sizeof(RANGE_STEPS_KM) / sizeof(RANGE_STEPS_KM[0]));
     for (int i = 0; i < n; ++i) { float d = km - RANGE_STEPS_KM[i]; if (d < 0) d = -d; if (d < bd) { bd = d; best = i; } }
     s_rangeIdx = best;
+}
+
+// BOOT button hold (main.cpp): the Stats power-off ring round the screen edge fills over the
+// hold, and unwinds if the button is let go early. Once the long press has fired (armed), a
+// label asks to let go: the radar goes to sleep on release. The ring is only touched when the
+// value changes, so an idle button never fights the Stats power-off hold for it.
+static lv_obj_t *s_btnSleepLbl = nullptr;
+void ui_button_hold(float progress, bool armed) {
+    static int32_t lastDeg = 0;
+    const int32_t deg = armed ? 360 : (int32_t)(360.0f * progress);
+    if (deg != lastDeg && !s_offFired) {
+        if (s_offRing) lv_anim_del(s_offRing, off_ring_anim_cb);
+        if (deg == 0) off_ring_unwind();
+        else          off_ring_set(deg);
+        lastDeg = deg;
+    }
+    if (armed && !s_btnSleepLbl) {
+        s_btnSleepLbl = lv_label_create(lv_layer_top());
+        lv_obj_set_style_text_font(s_btnSleepLbl, F16(), 0);
+        lv_obj_set_style_text_color(s_btnSleepLbl, UI_EMERG, 0);
+        lv_obj_set_style_bg_color(s_btnSleepLbl, UI_PANEL, 0);
+        lv_obj_set_style_bg_opa(s_btnSleepLbl, 235, 0);
+        lv_obj_set_style_radius(s_btnSleepLbl, 14, 0);
+        lv_obj_set_style_pad_hor(s_btnSleepLbl, 16, 0);
+        lv_obj_set_style_pad_ver(s_btnSleepLbl, 10, 0);
+        lv_label_set_text(s_btnSleepLbl, LV_SYMBOL_POWER " Release to sleep");
+        lv_obj_center(s_btnSleepLbl);
+    } else if (!armed && s_btnSleepLbl) {
+        lv_obj_del(s_btnSleepLbl);
+        s_btnSleepLbl = nullptr;
+    }
 }
 
 // Long-press cycles the visual theme — but only if the finger never drags: cycling at

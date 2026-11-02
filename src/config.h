@@ -1,7 +1,7 @@
 #pragma once
 // Capsule Radar — build & user configuration.
 
-#define FW_VERSION "1.6.0"   // shown on the web config page + Stats screen; bump on release
+#define FW_VERSION "1.6.0-dragon.1"   // shown on the web config page + Stats screen; bump on release
 
 // ---------- Home location (default: Dénia, Spain) ----------
 // Overridable at runtime via the captive portal (stored in NVS).
@@ -69,6 +69,16 @@ static const float WEB_RANGE_KM[]   = {10.0f, 15.0f, 25.0f, 30.0f, 50.0f, 100.0f
 #define FACEDOWN_CHECK_MS   400
 #define FACEDOWN_COUNT      4
 #define FACEDOWN_THRESHOLD  9000           // ~0.55 g past zero, on the side opposite the resting pose
+
+// BOOT button (PIN_BOOT_BUTTON; the crown on a radar case), see boot_button.h and main.cpp.
+// A short press steps the zoom like the on-screen button (on a dark or idle screen it only
+// wakes it); holding it BOOT_BTN_LONG_MS puts the radar into deep sleep (the screen-edge
+// ring fills meanwhile, and it sleeps once the button is let go). A press wakes the chip,
+// but the radar only starts if the press is held BOOT_BTN_WAKE_HOLD_MS: a bump in a bag
+// sends it straight back to sleep.
+#define BOOT_BTN_DEBOUNCE_MS   30
+#define BOOT_BTN_LONG_MS       2000
+#define BOOT_BTN_WAKE_HOLD_MS  1500
 #define TZ_STR              "CET-1CEST,M3.5.0,M10.5.0/3"  // POSIX TZ (Spain) for local time/date
 #define BRIGHTNESS_IDLE     25             // dimmed after no touch for IDLE_DIM_MS
 #define IDLE_DIM_MS         20000          // dim the screen after this long without a touch
@@ -126,7 +136,7 @@ static const float WEB_RANGE_KM[]   = {10.0f, 15.0f, 25.0f, 30.0f, 50.0f, 100.0f
 // Sent with setUserAgent(), never addHeader() — see the note in docs/DATA_SOURCE.md.
 // Carries FW_VERSION: now that the header actually goes out, and adsb.lol checks it for
 // valid contact info, a provider should be able to tell which build is talking to them.
-#define ADSB_USER_AGENT     "CapsuleRadar/" FW_VERSION " (ESP32-S3 hobby; +https://github.com/socquique/capsule-radar)"
+#define ADSB_USER_AGENT     "CapsuleRadar/" FW_VERSION " (ESP32-S3 hobby; +https://github.com/BaQs/dragon-radar)"
 #define ADSB_HTTPS_INSECURE 1               // 1 = setInsecure() (hobby). 0 = use pinned root CA.
 #define TLS_HANDSHAKE_S     10              // TLS handshake timeout for every HTTPS client, seconds (core default is 120)
 #define ADSB_MAX_AIRCRAFT   60              // hard cap parsed per poll (protect RAM in busy areas)
