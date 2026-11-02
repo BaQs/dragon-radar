@@ -24,11 +24,17 @@ The crown presses the board's **BOOT button** (GPIO0):
   (screen and WiFi off).
 - **Wake up**: hold the crown 1.5 s. A short bump sends it straight back to sleep.
 
+It adds a **battery indicator** on the 1.43 (top of the screen). The board has no fuel gauge: its
+supply rail is read on GPIO4 through a ×3 divider (values from the Waveshare schematic and demo)
+and turned into a level with a LiPo curve. With USB plugged in that rail is the 5 V supply, so the
+indicator shows the charging mark next to the last level measured on battery. On battery the
+radar also polls the aircraft feed less often, as the 1.75 already did.
+
 It also fixes the theme changing by itself: LVGL's 0.4 s long press used to cycle the theme,
 so a slightly slow tap on an aircraft switched Orb to the next theme (and lost the tap). A theme
 change now takes a still 1.5 s hold away from any aircraft (`THEME_HOLD_MS`).
 
-Firmware version `1.6.0-dragon.2`, shown on the Stats screen and on the web page. Timings are the
+Firmware version `1.6.0-dragon.3`, shown on the Stats screen and on the web page. Timings are the
 `BOOT_BTN_*` values in `src/config.h`; the button logic is in `src/boot_button.h` and has host tests
 in `tests/boot_button_test.cpp`.
 
@@ -93,11 +99,11 @@ With the crown on top, the USB-C port sits at about 10 o'clock, so the radar cha
 
 ### Update over the air (board already running Capsule Radar)
 
-1. Download `dragon-radar-1.6.0-dragon.2-amoled143-ota.bin` from the
+1. Download `dragon-radar-1.6.0-dragon.3-amoled143-ota.bin` from the
    [Releases](https://github.com/BaQs/dragon-radar/releases).
 2. Open the radar's web page (`http://capsuleradar.local`, or the address shown on the Stats
    screen) and follow **Firmware update**.
-3. Upload the file. The radar restarts and shows `v1.6.0-dragon.2`.
+3. Upload the file. The radar restarts and shows `v1.6.0-dragon.3`.
 
 ### First install over USB
 

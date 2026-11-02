@@ -1,7 +1,7 @@
 #pragma once
 // Capsule Radar — build & user configuration.
 
-#define FW_VERSION "1.6.0-dragon.2"   // shown on the web config page + Stats screen; bump on release
+#define FW_VERSION "1.6.0-dragon.3"   // shown on the web config page + Stats screen; bump on release
 
 // ---------- Home location (default: Dénia, Spain) ----------
 // Overridable at runtime via the captive portal (stored in NVS).
@@ -84,6 +84,11 @@ static const float WEB_RANGE_KM[]   = {10.0f, 15.0f, 25.0f, 30.0f, 50.0f, 100.0f
 // LVGL's own long press (400 ms) was the trigger before, so a slightly slow tap on a plane
 // changed the theme (and lost the tap); on the 1.43 the polled touch makes taps last longer.
 #define THEME_HOLD_MS          1500
+
+// Battery level from a voltage reading (boards with BOARD_HAS_BAT_ADC, see battery_curve.h).
+// VCC above BAT_USB_MV cannot be a LiPo: the board runs on USB.
+#define BAT_USB_MV             4400
+#define BAT_SAMPLE_MS          1000    // at most one reading a second (callers come every 5 s)
 #define TZ_STR              "CET-1CEST,M3.5.0,M10.5.0/3"  // POSIX TZ (Spain) for local time/date
 #define BRIGHTNESS_IDLE     25             // dimmed after no touch for IDLE_DIM_MS
 #define IDLE_DIM_MS         20000          // dim the screen after this long without a touch
@@ -204,6 +209,11 @@ static const float WEB_RANGE_KM[]   = {10.0f, 15.0f, 25.0f, 30.0f, 50.0f, 100.0f
 // Safety net: catches a board header that still has placeholder pins in it.
 #if (PIN_LCD_SCLK < 0) || (PIN_I2C_SDA < 0)
 #  error "board header: QSPI/I2C pins are placeholders (-1). Fill in the real values."
+#endif
+
+// Boards that measure their supply on an ADC pin set this to 1 (battery.cpp).
+#ifndef BOARD_HAS_BAT_ADC
+#define BOARD_HAS_BAT_ADC 0
 #endif
 
 #ifndef ADSB_TASK_STACK_BYTES

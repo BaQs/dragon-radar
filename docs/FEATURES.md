@@ -28,6 +28,7 @@ Visual target: `assets/plane_radar_2.0_mockup.html`.
 13. **Graceful network handling** — weather products load independently after WiFi connects, retain their last valid image during transient failures and retry failed requests without blocking the display. Status text distinguishes forecast, precipitation-radar and satellite-data waits.
 14. **Desktop simulator** — the same 466×466 LVGL interface runs locally through SDL2. It includes mock aircraft, forecast data, precipitation cells and Meteosat-style cloud bands, allowing all three weather modes and round-screen layouts to be reviewed without flashing hardware. Live network imagery is fetched only by the ESP32 firmware.
 15. **BOOT button** (GPIO0 — the crown on a radar case) — a short press steps the zoom like the on-screen button (on a dark or idle screen it only wakes it); holding it 2 s fills the screen-edge ring, and on release the radar goes into **deep sleep** (panel and WiFi off). A press wakes it, but it only starts if the press is held 1.5 s, so a bump in a bag sends it straight back to sleep. Timings are `BOOT_BTN_*` in `config.h`. The board's power LED stays lit in deep sleep on the 1.43 (no PMIC).
+16. **Battery level on the 1.43** — no PMIC there: the VCC rail is read on GPIO4 (×3 divider, Waveshare schematic) and mapped to a level with a LiPo curve (`battery_curve.h`, host-tested). With USB in, VCC is the 5 V rail: the HUD shows the charging mark and the last level measured on battery.
 
 ## Weather data at a glance
 

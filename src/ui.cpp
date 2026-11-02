@@ -469,7 +469,12 @@ void ui_set_status(bool wifiUp, bool feedOk, int rssi, const char *clock) {
 
 void ui_set_battery(int pct, bool charging, bool present) {
     if (!s_hudBatt) return;
-    if (!present || pct < 0) { lv_label_set_text(s_hudBatt, ""); return; }   // USB-only -> hide
+    if (!present) { lv_label_set_text(s_hudBatt, ""); return; }
+    if (pct < 0) {   // level not known yet (a 1.43 that booted on USB): just the charging mark
+        lv_label_set_text(s_hudBatt, charging ? LV_SYMBOL_CHARGE : "");
+        lv_obj_set_style_text_color(s_hudBatt, UI_INK, 0);
+        return;
+    }
     const char *sym = pct > 80 ? LV_SYMBOL_BATTERY_FULL :
                       pct > 55 ? LV_SYMBOL_BATTERY_3 :
                       pct > 35 ? LV_SYMBOL_BATTERY_2 :

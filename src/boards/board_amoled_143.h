@@ -52,12 +52,16 @@
 #define TP_MIRROR_Y         false
 
 // ---------- Peripherals ----------
-// No AXP2101 and no ES8311 on this board (an I2C scan finds neither). Battery level
-// is instead a divided analog reading on GPIO4, but the divider ratio is not
-// documented, so battery reporting stays off rather than showing an invented number.
+// No AXP2101 and no ES8311 on this board (an I2C scan finds neither). The battery level
+// comes from a divided analog reading of the VCC rail on GPIO4 (ADC1 channel 3):
+// R11 200k / R13 100k on the Waveshare schematic, i.e. x3, which is also what Waveshare's
+// own 01_ADC_Test demo multiplies the calibrated millivolts by. VCC is the cell voltage on
+// battery and the 5 V rail with USB in (see battery_curve.h).
 #define BOARD_HAS_PMIC      0
 #define BOARD_HAS_AUDIO     0
-#define PIN_BAT_ADC         4              // unused for now; see note above
+#define BOARD_HAS_BAT_ADC   1
+#define PIN_BAT_ADC         4
+#define BAT_ADC_RATIO       3.0f
 #define I2C_ADDR_IMU        0x6B
 #define I2C_ADDR_RTC        0x51
 
