@@ -6,6 +6,8 @@ its only button.
 
 ![Renders of the case](hardware/dragon-radar-1.43/images/renders.png)
 
+**[Interactive 3D view](https://baqs.github.io/dragon-radar/viewer/)**: turn the radar around, explode it, cut it in half, press the crown.
+
 This repository is a fork of **[socquique/capsule-radar](https://github.com/socquique/capsule-radar)**
 by Quique Tortosa, the live ADS-B radar firmware (MIT). The firmware is the same apart from the
 crown button described below; everything else the radar does (web configuration, themes, weather

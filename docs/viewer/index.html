@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dragon Radar — 3D view</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<meta name="description" content="Interactive 3D view of the Dragon Radar: a Dragon Ball radar case for the Waveshare ESP32-S3-Touch-AMOLED-1.43 running Capsule Radar.">
+<style>
+/* Layout: the 3D viewport as the hero, controls panel on the left (stacked under the view on phones). */
+:root {
+  --bg: #e9eee7;
+  --panel: #f7f9f5;
+  --fg: #1b231d;
+  --muted: #5a675e;
+  --line: #d2dbd0;
+  --accent: #e2851b;          /* orange des boules de cristal */
+  --accent-fg: #ffffff;
+  --radar: #5fae5c;           /* radar screen green */
+  --view-hi: #f4f7f2;
+  --view-lo: #cfd8cc;
+  --chip: #edf1ea;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1410; --panel: #151c17; --fg: #e5ebe4; --muted: #97a59b; --line: #29332b;
+    --accent: #f2a03a; --accent-fg: #1a1205; --radar: #7cc871; --view-hi: #1d261f; --view-lo: #0a0e0b; --chip: #1c241e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1410; --panel: #151c17; --fg: #e5ebe4; --muted: #97a59b; --line: #29332b;
+  --accent: #f2a03a; --accent-fg: #1a1205; --radar: #7cc871; --view-hi: #1d261f; --view-lo: #0a0e0b; --chip: #1c241e;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+.app { display: grid; grid-template-columns: minmax(0, 330px) minmax(0, 1fr); height: 100%; }
+.panel { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding-inline: 22px; padding-block: 22px 28px; display: flex; flex-direction: column; gap: 22px; }
+.eyebrow a { color: inherit; }
+.eyebrow { font-family: var(--font-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.05; margin: 4px 0 8px; text-wrap: balance; letter-spacing: .01em; }
+h1 .ball { display: inline-block; width: .55em; height: .55em; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe2a6, var(--accent) 60%); vertical-align: .08em; margin-left: .15em; }
+.lede { color: var(--muted); margin: 0; }
+.lede b { color: var(--fg); font-weight: 600; font-family: var(--font-data); font-size: 13px; }
+section h2 { font-family: var(--font-display); font-size: 13px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 10px; color: var(--fg); }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--chip); }
+.seg button { font: 500 13px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 7px; padding: 8px 0; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.press { width: 100%; display: flex; align-items: center; gap: 12px; font: 600 14px var(--font-body); color: var(--accent-fg); background: var(--accent); border: 0; border-radius: 12px; padding: 12px 14px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+.press .knurl { width: 26px; height: 26px; border-radius: 50%; flex: none; background: repeating-conic-gradient(rgba(255,255,255,.55) 0 6deg, rgba(0,0,0,.18) 6deg 12deg); box-shadow: inset 0 0 0 3px rgba(0,0,0,.12); }
+.press.down { transform: translateY(1px); filter: brightness(.92); }
+.press .lbl { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+.press small { font: 400 12px var(--font-body); opacity: .85; }
+.hold { height: 3px; border-radius: 2px; background: var(--line); margin-top: 8px; overflow: hidden; }
+.hold i { display: block; height: 100%; width: 0; background: var(--accent); }
+.state { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.pill { font: 500 12px var(--font-data); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--fg); font-variant-numeric: tabular-nums; }
+.pill.on::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--radar); margin-right: 6px; vertical-align: 1px; }
+.pill.off::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-right: 6px; vertical-align: 1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font: 500 13px var(--font-body); padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.chips button[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+.chips .sw { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+dt { color: var(--muted); }
+dd { margin: 0; font-family: var(--font-data); font-size: 12.5px; font-variant-numeric: tabular-nums; min-width: 0; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.view { position: relative; min-width: 0; min-height: 0; background: radial-gradient(120% 90% at 50% 40%, var(--view-hi), var(--view-lo)); }
+.view canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.overlay { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); font-family: var(--font-data); font-size: 13px; pointer-events: none; padding-inline: 16px; }
+.hint { position: absolute; left: 16px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); right: 16px; color: var(--muted); font-size: 12px; pointer-events: none; }
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: 58vh auto; height: auto; }
+  html, body { height: auto; }
+  .view { order: -1; height: 58vh; }
+  .panel { border-right: 0; border-top: 1px solid var(--line); padding-inline: 16px; overflow: visible; }
+  h1 { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { .press, .seg button { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="panel">
+    <header>
+      <div class="eyebrow"><a href="https://github.com/BaQs/dragon-radar">github.com/BaQs/dragon-radar</a> · fork of <a href="https://github.com/socquique/capsule-radar">socquique/capsule-radar</a></div>
+      <h1>Dragon Radar 1.43<span class="ball" aria-hidden="true"></span></h1>
+      <p class="lede"><b>Ø 57.6 × 21.4 mm</b> · Waveshare ESP32-S3-Touch-AMOLED-1.43 · 603040 LiPo under the board.</p>
+    </header>
+
+    <section aria-labelledby="h-vue">
+      <h2 id="h-vue">View</h2>
+      <div class="seg" role="group" aria-label="View mode">
+        <button id="mode-monte" aria-pressed="true">Assembled</button>
+        <button id="mode-dos" aria-pressed="false">Back</button>
+        <button id="mode-eclate" aria-pressed="false">Exploded</button>
+        <button id="mode-coupe" aria-pressed="false">Section</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-mol">
+      <h2 id="h-mol">Crown (BOOT button)</h2>
+      <button class="press" id="press">
+        <span class="knurl" aria-hidden="true"></span>
+        <span class="lbl">Press<small>short: zoom · hold 2 s: sleep / wake</small></span>
+      </button>
+      <div class="hold" aria-hidden="true"><i id="hold-bar"></i></div>
+      <div class="state" aria-live="polite">
+        <span class="pill on" id="pill-power">on</span>
+        <span class="pill" id="pill-zoom">zoom ×1</span>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-pieces">
+      <h2 id="h-pieces">Parts</h2>
+      <div class="chips" id="chips-parts"></div>
+    </section>
+
+    <section aria-labelledby="h-coul">
+      <h2 id="h-coul">Colours</h2>
+      <div class="eyebrow" style="margin-bottom:6px">Case</div>
+      <div class="chips" id="chips-color"></div>
+      <div class="eyebrow" style="margin:12px 0 6px">Capsule Corp logo (2nd filament)</div>
+      <div class="chips" id="chips-logo"></div>
+    </section>
+
+    <section aria-labelledby="h-cotes">
+      <h2 id="h-cotes">Key dimensions</h2>
+      <dl>
+        <dt>Glass</dt><dd>Ø 46.0 under a Ø 40.4 lip</dd>
+        <dt>Crown</dt><dd>gap 0.45 · click 0.7 · stop 0.9 mm</dd>
+        <dt>Closing</dt><dd>6 × M2×10 from the back</dd>
+        <dt>Board</dt><dd>4 × M2×5 + 3 × M2×6, countersunk</dd>
+        <dt>USB-C</dt><dd>13 × 7.4 mm, at 10 o'clock</dd>
+        <dt>Logo</dt><dd>0.6 mm inlay, 38 mm wide</dd>
+        <dt>Board turned</dt><dd>66.5° (BOOT under the crown)</dd>
+      </dl>
+    </section>
+  </aside>
+
+  <main class="view" id="view">
+    <canvas id="c" aria-label="3D view of the Dragon Radar"></canvas>
+    <div class="overlay" id="overlay">Loading the radar…</div>
+    <div class="hint">Drag to rotate · pinch or scroll to zoom · click the crown to press it</div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.146.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const MANIFEST = [{"name": "face", "v": 9868, "i": 36912, "pos": 0, "nrm": 118416, "idx": 236832}, {"name": "dos", "v": 20176, "i": 78534, "pos": 384480, "nrm": 626592, "idx": 868704}, {"name": "logo", "v": 4232, "i": 12084, "pos": 1182840, "nrm": 1233624, "idx": 1284408}, {"name": "molette", "v": 10817, "i": 31794, "pos": 1332744, "nrm": 1462548, "idx": 1592352}, {"name": "berceau", "v": 6634, "i": 22476, "pos": 1719528, "nrm": 1799136, "idx": 1878744}, {"name": "batterie", "v": 24, "i": 36, "pos": 1968648, "nrm": 1968936, "idx": 1969224}, {"name": "ecran", "v": 3456, "i": 10500, "pos": 1969368, "nrm": 2010840, "idx": 2052312}, {"name": "pcb", "v": 1256, "i": 3732, "pos": 2094312, "nrm": 2109384, "idx": 2124456}, {"name": "laiton", "v": 14256, "i": 50448, "pos": 2139384, "nrm": 2310456, "idx": 2481528}, {"name": "composants", "v": 79436, "i": 278238, "pos": 2683320, "nrm": 3636552, "idx": 4589784}];
+  const TOTAL_BYTES = 5702736;
+  const GLASS_Z = 2.268, ACTIVE_R = 18.375;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+  const overlay = $('overlay');
+
+  if (!window.THREE || !THREE.OrbitControls) { overlay.textContent = "The 3D library did not load. Reload the page."; return; }
+
+  const canvas = $('c'), view = $('view');
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); }
+  catch (e) { overlay.textContent = "WebGL is not available in this browser."; return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.localClippingEnabled = true;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 1, 2000);
+  const HOME = new THREE.Vector3(41, 29, 110), HOME_T = new THREE.Vector3(0, 1, -7);
+  const CUT = new THREE.Vector3(100, 24, 40), CUT_T = new THREE.Vector3(0, 1, -7);
+  const BACK = new THREE.Vector3(-29, 19, -116);
+  camera.position.copy(HOME);
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.copy(HOME_T); controls.enableDamping = true; controls.minDistance = 45; controls.maxDistance = 400;
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a9488, 0.85));
+  const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(60, 90, 120); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(-80, -40, -60); scene.add(rim);
+
+  // radar frame: front towards +Z, crown (local −X) at the top of the screen
+  const radar = new THREE.Group(); radar.rotation.z = -Math.PI / 2; scene.add(radar);
+  const carte = new THREE.Group(); radar.add(carte);
+
+  const cutPlane = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0);
+  const BODY = { beige: 0xf7e6de, gris: 0x8e959b, orange: 0xe2851b };   // beige = PLA Basic Beige (Bambu 10201)
+  const mats = {
+    face: new THREE.MeshStandardMaterial({ color: BODY.beige, roughness: 0.55, metalness: 0.0 }),
+    dos: new THREE.MeshStandardMaterial({ color: BODY.beige, roughness: 0.6, metalness: 0.0 }),
+    logo: new THREE.MeshStandardMaterial({ color: 0x2e3192, roughness: 0.55 }),
+    molette: new THREE.MeshStandardMaterial({ color: 0xb9bdc2, roughness: 0.35, metalness: 0.45 }),
+    berceau: new THREE.MeshStandardMaterial({ color: 0x3e9a62, roughness: 0.6 }),
+    batterie: new THREE.MeshStandardMaterial({ color: 0xc3c9cf, roughness: 0.35, metalness: 0.5 }),
+    ecran: new THREE.MeshStandardMaterial({ color: 0x06080a, roughness: 0.12, metalness: 0.3 }),
+    pcb: new THREE.MeshStandardMaterial({ color: 0x1c4ea6, roughness: 0.5 }),
+    laiton: new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.3, metalness: 0.85 }),
+    composants: new THREE.MeshStandardMaterial({ color: 0x6c727a, roughness: 0.5, metalness: 0.3 }),
+  };
+  Object.values(mats).forEach((m) => { m.side = THREE.DoubleSide; });
+
+  // radar screen: texture drawn live
+  const scr = document.createElement('canvas'); scr.width = scr.height = 512;
+  const sx = scr.getContext('2d');
+  const tex = new THREE.CanvasTexture(scr);
+  const screenMat = new THREE.MeshBasicMaterial({ map: tex });
+  const screen = new THREE.Mesh(new THREE.CircleGeometry(ACTIVE_R, 96), screenMat);
+  screen.position.z = GLASS_Z + 0.04; screen.rotation.z = Math.PI / 2; carte.add(screen);
+  const allMats = [...Object.values(mats), screenMat];
+
+  const meshes = {};
+  let power = 1, powered = true, zoomIdx = 0;
+  const SCALES = [1, 2, 4];
+  const BALLS = [{ x: 1.3, y: 0.9 }, { x: -2.3, y: 2.6 }, { x: 0.5, y: -3.4 }, { x: 3.6, y: -1.2 }];
+  function drawScreen(t) {
+    const S = 512, C = 256;
+    sx.fillStyle = '#020302'; sx.fillRect(0, 0, S, S);
+    if (power <= 0.01) { tex.needsUpdate = true; return; }
+    sx.save(); sx.globalAlpha = power;
+    const g = sx.createRadialGradient(C, C, 30, C, C, C);
+    g.addColorStop(0, '#c8eda9'); g.addColorStop(0.75, '#7cc36f'); g.addColorStop(1, '#4f9a4f');
+    sx.fillStyle = g; sx.beginPath(); sx.arc(C, C, C, 0, Math.PI * 2); sx.fill();
+    const sc = SCALES[zoomIdx], step = 34 * sc;
+    sx.strokeStyle = 'rgba(28, 86, 38, .75)'; sx.lineWidth = 2;
+    for (let k = -Math.ceil(C / step); k <= Math.ceil(C / step); k++) {
+      const p = C + k * step;
+      sx.beginPath(); sx.moveTo(p, 0); sx.lineTo(p, S); sx.stroke();
+      sx.beginPath(); sx.moveTo(0, p); sx.lineTo(S, p); sx.stroke();
+    }
+    BALLS.forEach((b, i) => {
+      const px = C + b.x * 52 * sc, py = C - b.y * 52 * sc;
+      if (Math.hypot(px - C, py - C) > C - 14) return;
+      const a = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * 0.006 + i * 1.7));
+      sx.globalAlpha = power * a; sx.shadowColor = '#ffcf4a'; sx.shadowBlur = 22;
+      sx.fillStyle = '#ffc12e'; sx.beginPath(); sx.arc(px, py, 9 + 2 * sc, 0, Math.PI * 2); sx.fill();
+      sx.shadowBlur = 0;
+    });
+    sx.globalAlpha = power; sx.fillStyle = '#7a1b12';
+    sx.beginPath(); sx.moveTo(C, C - 13); sx.lineTo(C - 10, C + 9); sx.lineTo(C + 10, C + 9); sx.closePath(); sx.fill();
+    const v = sx.createRadialGradient(C, C, C * 0.7, C, C, C);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.35)');
+    sx.fillStyle = v; sx.beginPath(); sx.arc(C, C, C, 0, Math.PI * 2); sx.fill();
+    sx.restore(); tex.needsUpdate = true;
+  }
+
+  // exploded view offsets (mm, radar frame)
+  const EXPLODE = { face: [0, 0, 21], dos: [0, 0, -18], molette: [-12, 0, 2], berceau: [0, 0, 1], batterie: [0, 0, -8], carte: [0, 0, 10] };
+  let explode = 0, explodeTarget = 0, crown = 0, crownTarget = 0;
+
+  async function load() {
+    const res = await fetch('radar.mesh');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    let buf;
+    if (res.body && res.body.getReader) {
+      const reader = res.body.getReader(); const chunks = []; let got = 0;
+      for (;;) {
+        const { done, value } = await reader.read(); if (done) break;
+        chunks.push(value); got += value.length;
+        overlay.textContent = `Loading the radar… ${(Math.min(got, TOTAL_BYTES) / 1048576).toFixed(1)} / ${(TOTAL_BYTES / 1048576).toFixed(1)} MB`;
+      }
+      const all = new Uint8Array(got); let o = 0; chunks.forEach((c) => { all.set(c, o); o += c.length; }); buf = all.buffer;
+    } else { buf = await res.arrayBuffer(); }
+    MANIFEST.forEach((e) => {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, e.pos, e.v * 3), 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(buf, e.nrm, e.v * 3), 3));
+      geo.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, e.idx, e.i), 1));
+      const m = new THREE.Mesh(geo, mats[e.name]); m.name = e.name;
+      (['ecran', 'pcb', 'laiton', 'composants'].includes(e.name) ? carte : radar).add(m);
+      meshes[e.name] = m;
+    });
+    overlay.hidden = true;
+  }
+
+  // ---- commandes
+  const modes = { monte: $('mode-monte'), dos: $('mode-dos'), eclate: $('mode-eclate'), coupe: $('mode-coupe') };
+  let camAnim = null;
+  function flyTo(pos, target) {
+    if (reduce) { camera.position.copy(pos); controls.target.copy(target); return; }
+    camAnim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: target.clone(), s: performance.now() };
+  }
+  function setMode(name) {
+    Object.entries(modes).forEach(([k, b]) => b.setAttribute('aria-pressed', String(k === name)));
+    explodeTarget = name === 'eclate' ? 1 : 0;
+    allMats.forEach((m) => { m.clippingPlanes = name === 'coupe' ? [cutPlane] : []; m.needsUpdate = true; });
+    if (name === 'coupe') flyTo(CUT, CUT_T); else if (name === 'monte') flyTo(HOME, HOME_T); else if (name === 'dos') flyTo(BACK, HOME_T);
+  }
+  modes.monte.onclick = () => setMode('monte');
+  modes.dos.onclick = () => setMode('dos');
+  modes.eclate.onclick = () => setMode('eclate');
+  modes.coupe.onclick = () => setMode('coupe');
+
+  const PARTS = [['face', 'Front'], ['dos', 'Back'], ['molette', 'Crown'], ['berceau', 'Cradle'], ['carte', 'Board'], ['batterie', 'Battery']];
+  PARTS.forEach(([k, label]) => {
+    const b = document.createElement('button'); b.id = 'part-' + k; b.textContent = label; b.setAttribute('aria-pressed', 'true');
+    b.onclick = () => {
+      const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on));
+      const obj = k === 'carte' ? carte : meshes[k]; if (obj) obj.visible = on;
+      if (k === 'dos' && meshes.logo) meshes.logo.visible = on;
+    };
+    $('chips-parts').appendChild(b);
+  });
+  [['beige', 'Beige'], ['gris', 'Grey'], ['orange', 'Orange']].forEach(([k, label], i) => {
+    const b = document.createElement('button'); b.id = 'color-' + k; b.setAttribute('aria-pressed', String(i === 0));
+    const sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = '#' + BODY[k].toString(16).padStart(6, '0');
+    b.append(sw, document.createTextNode(label));
+    b.onclick = () => {
+      document.querySelectorAll('#chips-color button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      mats.face.color.setHex(BODY[k]); mats.dos.color.setHex(BODY[k]);
+    };
+    $('chips-color').appendChild(b);
+  });
+
+  const LOGO = { bleu: 0x2e3192, noir: 0x16181b, orange: 0xe2851b };
+  [['bleu', 'Capsule Corp blue'], ['noir', 'Black'], ['orange', 'Orange']].forEach(([k, label], i) => {
+    const b = document.createElement('button'); b.id = 'logo-' + k; b.setAttribute('aria-pressed', String(i === 0));
+    const sw = document.createElement('span'); sw.className = 'sw'; sw.style.background = '#' + LOGO[k].toString(16).padStart(6, '0');
+    b.append(sw, document.createTextNode(label));
+    b.onclick = () => { document.querySelectorAll('#chips-logo button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); mats.logo.color.setHex(LOGO[k]); };
+    $('chips-logo').appendChild(b);
+  });
+
+  // crown press: short = next zoom step, hold 2 s = sleep / wake (as in the firmware)
+  const pressBtn = $('press'), holdBar = $('hold-bar');
+  const LONG = 2000;
+  let pressStart = null, longDone = false;
+  function updatePills() {
+    const p = $('pill-power'); p.textContent = powered ? 'on' : 'asleep'; p.className = 'pill ' + (powered ? 'on' : 'off');
+    $('pill-zoom').textContent = 'zoom ×' + SCALES[zoomIdx];
+  }
+  function down() {
+    if (pressStart !== null) return;
+    pressStart = performance.now(); longDone = false; crownTarget = 1; pressBtn.classList.add('down');
+  }
+  function up() {
+    if (pressStart === null) return;
+    if (!longDone && powered) zoomIdx = (zoomIdx + 1) % SCALES.length;
+    pressStart = null; crownTarget = 0; pressBtn.classList.remove('down'); holdBar.style.width = '0'; updatePills();
+  }
+  pressBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); pressBtn.setPointerCapture(e.pointerId); down(); });
+  pressBtn.addEventListener('pointerup', up);
+  pressBtn.addEventListener('pointercancel', up);
+  pressBtn.addEventListener('keydown', (e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); down(); } });
+  pressBtn.addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); up(); } });
+
+  // clic directement sur la molette du radar
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!meshes.molette || !meshes.molette.visible) return;
+    const r = canvas.getBoundingClientRect();
+    ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    if (ray.intersectObject(meshes.molette).length) {
+      controls.enabled = false; canvas.setPointerCapture(e.pointerId); down();
+      const release = () => { up(); controls.enabled = true; canvas.removeEventListener('pointerup', release); canvas.removeEventListener('pointercancel', release); };
+      canvas.addEventListener('pointerup', release); canvas.addEventListener('pointercancel', release);
+    }
+  }, { capture: true });
+
+  function resize() {
+    const w = view.clientWidth, h = view.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / Math.max(h, 1); camera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resize).observe(view); resize();
+
+  const lerp = (a, b, k) => a + (b - a) * k;
+  function frame(t) {
+    requestAnimationFrame(frame);
+    const k = reduce ? 1 : 0.12;
+    explode = lerp(explode, explodeTarget, k);
+    crown = lerp(crown, crownTarget, reduce ? 1 : 0.35);
+    if (pressStart !== null) {
+      const held = t - pressStart; holdBar.style.width = Math.min(100, held / LONG * 100) + '%';
+      if (!longDone && held >= LONG) { longDone = true; powered = !powered; updatePills(); }
+    }
+    power = lerp(power, powered ? 1 : 0, reduce ? 1 : 0.08);
+    const set = (obj, key2, extra) => { if (!obj) return; const d = EXPLODE[key2]; obj.position.set(d[0] * explode + (extra || 0), d[1] * explode, d[2] * explode); };
+    set(meshes.face, 'face'); set(meshes.dos, 'dos'); set(meshes.logo, 'dos'); set(meshes.berceau, 'berceau'); set(meshes.batterie, 'batterie');
+    set(carte, 'carte'); set(meshes.molette, 'molette', crown * 0.9);
+    if (camAnim) {
+      const u = Math.min(1, (t - camAnim.s) / 700), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      camera.position.lerpVectors(camAnim.p0, camAnim.p1, e); controls.target.lerpVectors(camAnim.t0, camAnim.t1, e);
+      if (u >= 1) camAnim = null;
+    }
+    drawScreen(t);
+    controls.update(); renderer.render(scene, camera);
+  }
+  updatePills();
+  requestAnimationFrame(frame);
+  load().catch((err) => { overlay.textContent = 'The 3D model did not load (' + err.message + '). Reload the page.'; });
+})();
+</script>
+
+</body>
+</html>
