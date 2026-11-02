@@ -5,6 +5,9 @@ Boîtier du radar Dragon Ball (projet [BaQs/dragon-radar](https://github.com/BaQ
 ESP32-S3-Touch-AMOLED-1.43, avec une LiPo 603040 sous la carte et une molette qui appuie sur le
 bouton BOOT. Dimensions : Ø 57,6 × 21,4 mm.
 
+Page MakerWorld (profil d'impression prêt à lancer) :
+https://makerworld.com/en/models/3537129-capsule-radar-live-flight-radar-with-button
+
 ## Fichiers
 
 - `dragon-radar-1.43.3mf` : projet Bambu Studio (X2D, buse 0.4, 0,20 mm, plaque PEI texturée),

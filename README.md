@@ -8,6 +8,8 @@ its only button.
 
 **[Interactive 3D view](https://baqs.github.io/dragon-radar/viewer/)**: turn the radar around, explode it, cut it in half, press the crown.
 
+**[Print it from MakerWorld](https://makerworld.com/en/models/3537129-capsule-radar-live-flight-radar-with-button)**: the ready-to-print profile (one plate, two colours).
+
 This repository is a fork of **[socquique/capsule-radar](https://github.com/socquique/capsule-radar)**
 by Quique Tortosa, the live ADS-B radar firmware (MIT). The firmware is the same apart from the
 crown button described below; everything else the radar does (web configuration, themes, weather
@@ -56,7 +58,8 @@ Finished size: Ø 57.6 × 21.4 mm.
 
 ## Printing
 
-Everything is in [`hardware/dragon-radar-1.43/`](hardware/dragon-radar-1.43/):
+Everything is in [`hardware/dragon-radar-1.43/`](hardware/dragon-radar-1.43/) (the same 3MF is on
+[MakerWorld](https://makerworld.com/en/models/3537129-capsule-radar-live-flight-radar-with-button)):
 
 - `dragon-radar-1.43.3mf`: Bambu Studio project (X2D, 0.4 mm nozzle, 0.20 mm layers, textured PEI
   plate), every part on one plate, about 1 h 20. Filament 1 is the body, filament 2 the logo.
