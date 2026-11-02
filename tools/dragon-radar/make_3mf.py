@@ -37,6 +37,15 @@ OBJECTS = [
 ]
 PLATES = {1: 'Radar complet - supports sur la face seulement'}
 
+# Noms en anglais (publication MakerWorld) : variable d'environnement DRAGON_3MF_LANG=en
+import os
+if os.environ.get('DRAGON_3MF_LANG') == 'en':
+    EN = {'Face (lèvre en haut)': 'Front (lip up)', 'Dos': 'Back', 'Logo Capsule Corp': 'Capsule Corp logo',
+          'Berceau de la carte': 'Board cradle', 'Support - pied': 'Stand - base', 'Support - berceau': 'Stand - cradle',
+          'Molette (roue en bas)': 'Crown (wheel down)'}
+    OBJECTS = [([(f, EN.get(n, n), e) for f, n, e in o[0]] if isinstance(o[0], list) else o[0], EN.get(o[1], o[1])) + tuple(o[2:]) for o in OBJECTS]
+    PLATES = {1: 'Dragon Radar - all parts (supports on the front only)'}
+
 def fmt(v): return f'{v:.5f}'.rstrip('0').rstrip('.')
 
 objs = []
@@ -84,13 +93,16 @@ res = '\n'.join(f'''  <object id="{o['id']}" p:UUID="{uuid.uuid4()}" type="model
   </object>''' for o in objs)
 items = '\n'.join(f'''  <item objectid="{o['id']}" p:UUID="{uuid.uuid4()}" transform="1 0 0 0 1 0 0 0 1 {o['t'][0]:.4f} {o['t'][1]:.4f} {o['t'][2]:.5f}" printable="1"/>''' for o in objs)
 today = datetime.date.today().isoformat()
+DESC = (f'Dragon Radar for the Waveshare ESP32-S3-Touch-AMOLED-{SCREEN} - https://github.com/BaQs/dragon-radar (based on socquique/capsule-radar)'
+        if os.environ.get('DRAGON_3MF_LANG') == 'en' else
+        f'Dragon Radar pour la Waveshare ESP32-S3-Touch-AMOLED-{SCREEN} - https://github.com/BaQs/dragon-radar (base : socquique/capsule-radar)')
 main = f'''<?xml version="1.0" encoding="UTF-8"?>
 <model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p">
  <metadata name="Application">{APP}</metadata>
  <metadata name="BambuStudio:3mfVersion">1</metadata>
  <metadata name="Copyright"></metadata>
  <metadata name="CreationDate">{today}</metadata>
- <metadata name="Description">Dragon Radar pour la Waveshare ESP32-S3-Touch-AMOLED-{SCREEN} - https://github.com/BaQs/dragon-radar (base : socquique/capsule-radar)</metadata>
+ <metadata name="Description">{DESC}</metadata>
  <metadata name="Designer"></metadata>
  <metadata name="DesignerCover"></metadata>
  <metadata name="DesignerUserId"></metadata>
